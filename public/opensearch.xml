@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>LUOFILM</ShortName>
+  <Description>Search Luo translated movies, drama and series on LUOFILM.SITE — translated by VJ Paul UG</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="16" height="16" type="image/png">https://luofilm.site/logo.png</Image>
+  <Image width="64" height="64" type="image/png">https://luofilm.site/logo.png</Image>
+  <Url type="text/html" template="https://luofilm.site/search?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://luofilm.site/opensearch.xml"/>
+  <moz:SearchForm>https://luofilm.site/search</moz:SearchForm>
+  <Language>en</Language>
+  <Language>luo</Language>
+  <OutputEncoding>UTF-8</OutputEncoding>
+  <AdultContent>false</AdultContent>
+  <Contact>mainplatform.nexus@gmail.com</Contact>
+  <Attribution>LUOFILM.SITE — Luo Translated Movies Streaming Platform by VJ Paul UG</Attribution>
+</OpenSearchDescription>

@@ -1,0 +1,20 @@
+/* TEAM */
+Platform Manager: Gilbert Paul
+Contact: mainplatform.nexus@gmail.com
+WhatsApp: +256 760 734 679
+Content Translator: VJ Paul UG
+
+/* THANKS */
+All our viewers and supporters worldwide who watch Luo translated content.
+
+/* SITE */
+Last update: 2025/01/01
+Language: English, Luo
+Doctype: HTML5
+IDE: Replit
+Standards: HTML5, CSS3, React, TypeScript
+Components: Vite, Firebase
+Software: LUOFILM.SITE — Streaming Platform
+Company: NEXUS PLATFORM
+License: AT DEVELOPERS SMC LIMITED
+Copyright: 2025 LUOFILM.SITE — All rights reserved

@@ -1,0 +1,37 @@
+{
+  "name": "LUOFILM.SITE — Luo Translated Movies & Drama",
+  "short_name": "LUOFILM",
+  "description": "Stream and download Luo translated movies, drama, series and anime — translated by VJ Paul UG. The #1 Luo streaming platform worldwide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0e0e",
+  "theme_color": "#cc00cc",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["entertainment", "video", "streaming"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

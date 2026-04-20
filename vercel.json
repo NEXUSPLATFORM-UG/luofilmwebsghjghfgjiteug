@@ -1,0 +1,8 @@
+{
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/og", "destination": "/api/og" },
+    { "source": "/play/:id", "destination": "/api/og?id=:id" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
