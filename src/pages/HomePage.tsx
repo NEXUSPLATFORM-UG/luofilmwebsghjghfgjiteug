@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Play, Sparkles } from "lucide-react";
 import { fbApi } from "../lib/firebaseApi";
 import { auth } from "../lib/firebase";
 import { useSEO } from "../hooks/useSEO";
+import ContinueWatching from "../components/ContinueWatching";
 
 interface Show {
   id: string;
@@ -294,6 +295,7 @@ export default function HomePage() {
       )}
 
       <div style={{ padding: "8px 12px 40px" }}>
+        <ContinueWatching />
         <SmartRecommender allShows={shows} />
         {shows.length > 0 && (
           <ContentRow title="ALL CONTENT" subtitle="RECENTLY ADDED" shows={shows.slice(0, 10)} categoryHref="/drama" />

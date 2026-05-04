@@ -65,6 +65,7 @@ interface VideoPlayerProps {
   poster?: string;
   title?: string;
   onEnded?: () => void;
+  onProgress?: (currentTime: number, duration: number, percent: number) => void;
   subtitles?: SubtitleTrack[];
   subtitlesEnabled?: boolean;
 }
@@ -78,7 +79,7 @@ function formatTime(s: number) {
   return `${m}:${String(sec).padStart(2, "0")}`;
 }
 
-export default function VideoPlayer({ src, poster, title, onEnded, subtitles = [], subtitlesEnabled = false }: VideoPlayerProps) {
+export default function VideoPlayer({ src, poster, title, onEnded, onProgress, subtitles = [], subtitlesEnabled = false }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -141,6 +142,11 @@ export default function VideoPlayer({ src, poster, title, onEnded, subtitles = [
       if (v.buffered.length > 0) setBuffered(v.buffered.end(v.buffered.length - 1));
       // Clear resource timings on every time update tick (when video is playing)
       try { performance.clearResourceTimings(); } catch (_) {}
+      // Fire onProgress every ~10 seconds of playback
+      if (onProgress && v.duration > 0 && Math.floor(v.currentTime) % 10 === 0 && v.currentTime > 2) {
+        const pct = Math.min(100, Math.round((v.currentTime / v.duration) * 100));
+        onProgress(v.currentTime, v.duration, pct);
+      }
     };
     const onDurationChange = () => setDuration(v.duration);
     const onWaiting = () => setLoading(true);

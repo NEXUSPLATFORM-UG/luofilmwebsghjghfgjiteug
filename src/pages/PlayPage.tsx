@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "wouter";
 import {
   Star,
@@ -17,6 +17,7 @@ import VIPModal from "../components/VIPModal";
 import AuthModal from "../components/AuthModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useSEO } from "../hooks/useSEO";
+import { saveWatchProgress } from "../components/ContinueWatching";
 
 function getEmbedInfo(url: string): { type: "video" | "iframe"; src: string } {
   if (!url) return { type: "video", src: "" };
@@ -541,6 +542,23 @@ export default function PlayPage() {
                 title={isSeries ? `${show.title} · Episode ${currentEp}` : show.title}
                 subtitles={subtitleTracks}
                 subtitlesEnabled={subtitlesOn}
+                onProgress={(currentTime, duration, percent) => {
+                  if (!show || !params.id) return;
+                  saveWatchProgress(
+                    params.id,
+                    {
+                      title: show.title,
+                      thumbnailUrl: show.coverUrl || show.thumbnailUrl || "",
+                      type: show.type,
+                      genre: show.genre,
+                      episode: isSeries ? currentEp : undefined,
+                    },
+                    currentTime,
+                    duration,
+                    percent
+                  );
+                  window.dispatchEvent(new Event("lf_progress_updated"));
+                }}
               />
             );
           })() : (

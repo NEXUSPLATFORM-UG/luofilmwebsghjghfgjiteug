@@ -3,6 +3,8 @@ import { createServer as createViteServer } from "vite";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { eq, desc, sql } from "drizzle-orm";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import {
   pgTable,
   serial,
@@ -528,6 +530,229 @@ apiRouter.post("/admin/activities", async (req, res) => {
 });
 
 app.use("/api", apiRouter);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Firestore REST API helpers (public content — no auth required)
+// ─────────────────────────────────────────────────────────────────────────────
+const FIREBASE_PROJECT_ID = "luo-film-site";
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+
+function fsVal(field: any): any {
+  if (!field) return null;
+  if ("stringValue" in field) return field.stringValue;
+  if ("integerValue" in field) return Number(field.integerValue);
+  if ("doubleValue" in field) return Number(field.doubleValue);
+  if ("booleanValue" in field) return field.booleanValue;
+  if ("timestampValue" in field) return field.timestampValue;
+  return null;
+}
+
+function fsDocToContent(doc: any) {
+  const id = doc.name.split("/").pop();
+  const f = doc.fields || {};
+  return {
+    id,
+    title: fsVal(f.title) || "",
+    status: fsVal(f.status) || "",
+    type: fsVal(f.type) || "",
+    genre: fsVal(f.genre) || "",
+    description: fsVal(f.description) || "",
+    thumbnailUrl: fsVal(f.thumbnailUrl) || fsVal(f.coverUrl) || "",
+    year: fsVal(f.year) || "",
+    updatedAt: fsVal(f.updatedAt) || new Date().toISOString(),
+  };
+}
+
+async function fetchAllPublishedContent(): Promise<any[]> {
+  const all: any[] = [];
+  let pageToken = "";
+  do {
+    const url = `${FS_BASE}/content?pageSize=300${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`;
+    const res = await fetch(url);
+    if (!res.ok) break;
+    const data = await res.json();
+    if (data.documents) all.push(...data.documents);
+    pageToken = data.nextPageToken || "";
+  } while (pageToken);
+  return all.map(fsDocToContent).filter((d) => d.status === "published" && d.title);
+}
+
+// Cache published content for 5 minutes so sitemap updates as new movies are added
+let _contentCache: any[] | null = null;
+let _contentCacheTime = 0;
+const CONTENT_CACHE_MS = 5 * 60 * 1000;
+
+async function getCachedContent(): Promise<any[]> {
+  const now = Date.now();
+  if (_contentCache && now - _contentCacheTime < CONTENT_CACHE_MS) return _contentCache;
+  _contentCache = await fetchAllPublishedContent();
+  _contentCacheTime = now;
+  return _contentCache;
+}
+
+function xmlEsc(s: string): string {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function attrEsc(s: string): string {
+  return String(s || "").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function getIndexHtml(): string {
+  const candidates = [
+    resolve(process.cwd(), "dist/index.html"),
+    resolve(process.cwd(), "index.html"),
+  ];
+  for (const p of candidates) {
+    try { return readFileSync(p, "utf-8"); } catch {}
+  }
+  return "";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// No-cache middleware for all HTML responses
+// ─────────────────────────────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  if (!req.path.match(/\.\w{2,5}$/)) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+  }
+  next();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dynamic sitemap — lists EVERY published movie & series individually
+// Updates every 5 minutes as new content is added
+// ─────────────────────────────────────────────────────────────────────────────
+app.get("/sitemap.xml", async (_req, res) => {
+  try {
+    const content = await getCachedContent();
+    const today = new Date().toISOString().split("T")[0];
+
+    const staticPages = [
+      { loc: "https://luofilm.site/", priority: "1.0", changefreq: "hourly" },
+      { loc: "https://luofilm.site/drama", priority: "0.9", changefreq: "hourly" },
+      { loc: "https://luofilm.site/movie", priority: "0.9", changefreq: "hourly" },
+      { loc: "https://luofilm.site/anime", priority: "0.8", changefreq: "daily" },
+      { loc: "https://luofilm.site/variety", priority: "0.8", changefreq: "daily" },
+      { loc: "https://luofilm.site/sports", priority: "0.7", changefreq: "daily" },
+      { loc: "https://luofilm.site/documentary", priority: "0.7", changefreq: "daily" },
+      { loc: "https://luofilm.site/search", priority: "0.8", changefreq: "hourly" },
+      { loc: "https://luofilm.site/terms", priority: "0.3", changefreq: "monthly" },
+      { loc: "https://luofilm.site/privacy", priority: "0.3", changefreq: "monthly" },
+      { loc: "https://luofilm.site/contact", priority: "0.5", changefreq: "monthly" },
+    ];
+
+    const staticXml = staticPages
+      .map(
+        (p) =>
+          `  <url>\n    <loc>${p.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`
+      )
+      .join("\n");
+
+    const contentXml = content
+      .map((c) => {
+        const videoBlock = c.thumbnailUrl
+          ? `\n    <image:image>\n      <image:loc>${xmlEsc(c.thumbnailUrl)}</image:loc>\n      <image:title>${xmlEsc(c.title + " — Luo Translated by VJ Paul UG")}</image:title>\n      <image:caption>${xmlEsc((c.description || c.title).slice(0, 200))}</image:caption>\n    </image:image>\n    <video:video>\n      <video:thumbnail_loc>${xmlEsc(c.thumbnailUrl)}</video:thumbnail_loc>\n      <video:title>${xmlEsc(c.title + " (Luo Translated) — VJ Paul UG | LUOFILM.SITE")}</video:title>\n      <video:description>${xmlEsc((c.description || c.title).slice(0, 2048))}</video:description>\n      <video:player_loc>https://luofilm.site/play/${xmlEsc(c.id)}</video:player_loc>\n      <video:publication_date>${today}</video:publication_date>\n      <video:family_friendly>yes</video:family_friendly>\n    </video:video>`
+          : "";
+        return `  <url>\n    <loc>https://luofilm.site/play/${xmlEsc(c.id)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>${videoBlock}\n  </url>`;
+      })
+      .join("\n");
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"\n        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n${staticXml}\n${contentXml}\n</urlset>`;
+
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
+    res.send(xml);
+  } catch (e) {
+    console.error("Sitemap error:", e);
+    res.status(500).send("<?xml version=\"1.0\"?><error>Sitemap generation failed</error>");
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Server-side meta injection for /play/:id
+// Google sees actual movie title + description + image without needing JS
+// ─────────────────────────────────────────────────────────────────────────────
+app.get("/play/:id", async (req, res) => {
+  const id = req.params.id;
+  let html = getIndexHtml();
+
+  try {
+    const fsRes = await fetch(`${FS_BASE}/content/${id}`);
+    if (fsRes.ok) {
+      const doc = await fsRes.json();
+      if (doc.fields) {
+        const c = fsDocToContent(doc);
+        if (c.title) {
+          const title = `${c.title} (Luo Translated) — Watch Free | VJ Paul UG | LUOFILM.SITE`;
+          const desc = c.description
+            ? `${c.description.slice(0, 155)} — Watch this Luo translated ${c.type === "movie" ? "movie" : "series"} by VJ Paul UG free on LUOFILM.SITE.`
+            : `Watch "${c.title}" in Luo language — translated by VJ Paul UG. Stream free on LUOFILM.SITE, Uganda's #1 Luo streaming platform.`;
+          const image = c.thumbnailUrl || "https://luofilm.site/logo.png";
+          const url = `https://luofilm.site/play/${id}`;
+          const today = new Date().toISOString().split("T")[0];
+
+          const schema = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": c.type === "movie" ? "Movie" : "TVSeries",
+            "@id": url,
+            name: c.title,
+            alternateName: `${c.title} Luo Translated`,
+            description: c.description || c.title,
+            image,
+            thumbnailUrl: image,
+            url,
+            inLanguage: "luo",
+            genre: c.genre || "Entertainment",
+            datePublished: today,
+            director: { "@type": "Person", name: "VJ Paul UG" },
+            productionCompany: { "@type": "Organization", name: "LUOFILM.SITE" },
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "UGX",
+              availability: "https://schema.org/InStock",
+            },
+            potentialAction: { "@type": "WatchAction", target: url },
+          });
+
+          html = html
+            .replace(/<title>[^<]*<\/title>/, `<title>${attrEsc(title)}</title>`)
+            .replace(/<meta name="title"[^>]*\/?>/, `<meta name="title" content="${attrEsc(title)}" />`)
+            .replace(/<meta name="description"[^>]*\/?>/, `<meta name="description" content="${attrEsc(desc)}" />`)
+            .replace(/<meta property="og:title"[^>]*\/?>/, `<meta property="og:title" content="${attrEsc(title)}" />`)
+            .replace(/<meta property="og:description"[^>]*\/?>/, `<meta property="og:description" content="${attrEsc(desc)}" />`)
+            .replace(/<meta property="og:image"[^>]*\/?>/, `<meta property="og:image" content="${attrEsc(image)}" />`)
+            .replace(/<meta property="og:image:secure_url"[^>]*\/?>/, `<meta property="og:image:secure_url" content="${attrEsc(image)}" />`)
+            .replace(/<meta property="og:url"[^>]*\/?>/, `<meta property="og:url" content="${attrEsc(url)}" />`)
+            .replace(/<meta name="twitter:title"[^>]*\/?>/, `<meta name="twitter:title" content="${attrEsc(title)}" />`)
+            .replace(/<meta name="twitter:description"[^>]*\/?>/, `<meta name="twitter:description" content="${attrEsc(desc)}" />`)
+            .replace(/<meta name="twitter:image"[^>]*\/?>/, `<meta name="twitter:image" content="${attrEsc(image)}" />`)
+            .replace(
+              "</head>",
+              `  <link rel="canonical" href="${attrEsc(url)}" />\n  <script type="application/ld+json">${schema}</script>\n</head>`
+            );
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Meta injection error for /play/:id", e);
+  }
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  if (html) return res.send(html);
+  res.redirect("/");
+});
 
 const PORT = parseInt(process.env.PORT || "5000");
 const isDev = process.env.NODE_ENV !== "production";
