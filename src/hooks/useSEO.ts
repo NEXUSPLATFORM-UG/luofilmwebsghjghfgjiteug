@@ -47,27 +47,23 @@ export function useSEO({
   useEffect(() => {
     const fullTitle = title
       ? `${SITE_NAME} — ${title}`
-      : `${SITE_NAME} — Luo Translated Movies & Drama | VJ Paul UG`;
+      : `LUOFILM.SITE — #1 Luo Translated Movies, Series & All Genres | VJ Paul UG | Uganda`;
 
     const fullDescription =
       description ||
-      "Stream and download Luo translated movies, drama, series and anime — translated by VJ Paul UG. The #1 Luo streaming platform worldwide.";
+      "LUOFILM.SITE — Kakube me neno film ki series i luo. Streaming platform madit ki ber loyo weng i Uganda. Neno ki download film ma lubo i luo — action, comedy, horror, thriller, war, drama, Indian series, Korean, family movies, animation, romance, documentary, anime ki weng — ma gico ki VJ Paul UG. Website matek, video ma gipwodo, ki app ma twero neno offline. Free ki VIP. #1 Luo streaming platform i world.";
 
     const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL;
 
-    // Title
     document.title = fullTitle;
 
-    // Primary meta
     setMeta("title", fullTitle);
     setMeta("description", fullDescription);
     if (keywords) setMeta("keywords", keywords);
     setMeta("robots", noIndex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
 
-    // Canonical
     setLink("canonical", fullUrl);
 
-    // Open Graph
     setMeta("og:title", fullTitle, true);
     setMeta("og:description", fullDescription, true);
     setMeta("og:url", fullUrl, true);
@@ -75,7 +71,6 @@ export function useSEO({
     setMeta("og:type", type, true);
     setMeta("og:site_name", SITE_NAME, true);
 
-    // Twitter
     setMeta("twitter:title", fullTitle);
     setMeta("twitter:description", fullDescription);
     setMeta("twitter:image", image);
