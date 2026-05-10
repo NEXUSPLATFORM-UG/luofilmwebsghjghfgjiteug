@@ -23,6 +23,7 @@ interface Show {
   description?: string;
   coverUrl?: string;
   thumbnailUrl?: string;
+  updatedAt?: number;
 }
 
 const GENRE_KEYWORDS: Record<string, string[]> = {
@@ -56,6 +57,7 @@ function toShow(d: any): Show {
     description: d.description || "",
     coverUrl: d.coverUrl || d.thumbnailUrl || "",
     thumbnailUrl: d.thumbnailUrl || d.coverUrl || "",
+    updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : (d.updatedAt?.toMillis?.() ?? d.createdAt ?? 0),
   };
 }
 
@@ -75,6 +77,14 @@ function ShowCard({ show }: { show: Show }) {
               background: show.badge === "VIP" ? "linear-gradient(45deg,#ffc552,#ffdd9a)" : show.badge === "Express" ? "linear-gradient(45deg,#00a3f5,#00c9fd)" : "linear-gradient(45deg,#8819ff,#ad61ff)",
               color: show.badge === "VIP" ? "#4e2d03" : "#fff",
             }}>{show.badge}</span>
+          )}
+          {show.type === "series" && (show.episodeCount || 0) > 0 && show.updatedAt && (Date.now() - show.updatedAt) < 48 * 60 * 60 * 1000 && (
+            <span style={{
+              position: "absolute", bottom: 5, left: 0, right: 0, textAlign: "center",
+              fontSize: 10, fontWeight: 800, color: "#fff",
+              background: "linear-gradient(90deg,#00c853,#00e676)",
+              padding: "2px 0", letterSpacing: "0.5px",
+            }}>NEW · EP {show.episodeCount}</span>
           )}
         </div>
         <div style={{ paddingTop: 6, paddingBottom: 4 }}>
@@ -97,25 +107,25 @@ export default function CategoryPage({ genre, title, description: _description }
   const [loading, setLoading] = useState(true);
 
   const seoDescriptions: Record<string, string> = {
-    drama: "Watch Luo translated drama series — romance, modern, campus and historical dramas, all translated by VJ Paul UG on LUOFILM.SITE.",
-    movie: "Stream and download Luo translated movies — action, romance, thriller and more, all translated by VJ Paul UG on LUOFILM.SITE.",
-    anime: "Watch Luo translated anime — fantasy, xianxia, and animated series translated by VJ Paul UG on LUOFILM.SITE.",
-    variety: "Watch Luo translated variety and comedy shows on LUOFILM.SITE, translated by VJ Paul UG.",
-    sports: "Watch Luo translated sports and action content on LUOFILM.SITE, translated by VJ Paul UG.",
-    documentary: "Watch Luo translated documentaries and historical shows on LUOFILM.SITE, translated by VJ Paul UG.",
+    drama: "Watch Luo translated series & drama — Korean drama, Indian series, Chinese drama, Turkish series, romance, family, historical, short series and ALL types — all translated by VJ Paul UG (Senior Paul) on LUOFILM.SITE. Free streaming.",
+    movie: "Stream and download ALL Luo translated movies — action, comedy, horror, thriller, romance, sci-fi, war, family, biography, animation & every genre — Hollywood, Bollywood, Korean, Indian, Chinese and more — all translated by VJ Paul UG (Senior Paul) on LUOFILM.SITE.",
+    anime: "Watch Luo translated anime — action anime, fantasy, xianxia, adventure, comedy anime and all types — translated by VJ Paul UG (Senior Paul) on LUOFILM.SITE.",
+    variety: "Watch Luo translated variety, comedy shows, reality TV, game shows and talk shows on LUOFILM.SITE, all translated by VJ Paul UG (Senior Paul).",
+    sports: "Watch Luo translated sports and martial arts content on LUOFILM.SITE, translated by VJ Paul UG (Senior Paul).",
+    documentary: "Watch Luo translated documentaries — history, nature, true stories and historical shows — all translated by VJ Paul UG (Senior Paul) on LUOFILM.SITE.",
   };
   const seoKeywords: Record<string, string> = {
-    drama: "luo translated drama, luo drama series, vj paul drama, luo romance drama, luo korean drama, luo chinese drama",
-    movie: "luo translated movies, luo movies download, vj paul movies, luo film, luofilm movies, luo movies 2024 2025",
-    anime: "luo translated anime, luo anime series, vj paul anime, luo fantasy anime",
-    variety: "luo variety shows, luo comedy shows, vj paul variety, luo translated variety",
-    sports: "luo sports, luo action, vj paul sports, luo translated action",
-    documentary: "luo documentary, luo historical, vj paul documentary, luo translated documentary",
+    drama: "luo translated drama, luo translated series, luo drama series, luo short series, vj paul drama, senior paul drama, luo romance drama, luo korean drama, luo chinese drama, luo indian series, luo turkish series, luo translated 2025, luofilm series",
+    movie: "luo translated movies, luo movies 2025, luo movies download, vj paul movies, senior paul movies, luo action movies, luo comedy, luo horror, luo thriller, luo romance movies, luo film, luofilm movies, watch luo movies free",
+    anime: "luo translated anime, luo anime series, vj paul anime, senior paul anime, luo fantasy anime, luo xianxia, luo action anime",
+    variety: "luo variety shows, luo comedy shows, vj paul variety, senior paul variety, luo translated variety, luo reality tv",
+    sports: "luo sports, luo martial arts, vj paul sports, senior paul sports, luo translated action",
+    documentary: "luo documentary, luo historical documentary, vj paul documentary, senior paul documentary, luo translated documentary",
   };
   useSEO({
-    title: `Luo Translated ${title} — VJ Paul UG`,
-    description: seoDescriptions[genre] || `Watch Luo translated ${title} on LUOFILM.SITE, translated by VJ Paul UG.`,
-    keywords: seoKeywords[genre] || `luo translated ${genre}, vj paul, luofilm`,
+    title: `Luo Translated ${title} — All Genres | VJ Paul UG (Senior Paul) | LUOFILM.SITE`,
+    description: seoDescriptions[genre] || `Watch Luo translated ${title} on LUOFILM.SITE — all genres, all types — translated by VJ Paul UG (Senior Paul). Free streaming.`,
+    keywords: seoKeywords[genre] || `luo translated ${genre}, vj paul, senior paul, luofilm`,
     url: `/${genre === "movie" ? "movie" : genre}`,
   });
 

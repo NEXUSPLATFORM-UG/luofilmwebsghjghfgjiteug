@@ -580,7 +580,7 @@ async function fetchAllPublishedContent(): Promise<any[]> {
 // Cache published content for 5 minutes so sitemap updates as new movies are added
 let _contentCache: any[] | null = null;
 let _contentCacheTime = 0;
-const CONTENT_CACHE_MS = 5 * 60 * 1000;
+const CONTENT_CACHE_MS = 60 * 1000;
 
 async function getCachedContent(): Promise<any[]> {
   const now = Date.now();
@@ -669,7 +669,7 @@ app.get("/sitemap.xml", async (_req, res) => {
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"\n        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n${staticXml}\n${contentXml}\n</urlset>`;
 
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
-    res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
+    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60");
     res.send(xml);
   } catch (e) {
     console.error("Sitemap error:", e);
@@ -692,10 +692,13 @@ app.get("/play/:id", async (req, res) => {
       if (doc.fields) {
         const c = fsDocToContent(doc);
         if (c.title) {
-          const title = `${c.title} (Luo Translated) — Watch Free | VJ Paul UG | LUOFILM.SITE`;
+          const isMovie = c.type === "movie";
+          const typeLabel = isMovie ? "Movie" : "Series";
+          const epInfo = !isMovie && c.episodeCount ? ` — ${c.episodeCount} Episodes` : "";
+          const title = `${c.title}${epInfo} (Luo Translated) — Watch Free | VJ Paul UG (Senior Paul) | LUOFILM.SITE`;
           const desc = c.description
-            ? `${c.description.slice(0, 155)} — Watch this Luo translated ${c.type === "movie" ? "movie" : "series"} by VJ Paul UG free on LUOFILM.SITE.`
-            : `Watch "${c.title}" in Luo language — translated by VJ Paul UG. Stream free on LUOFILM.SITE, Uganda's #1 Luo streaming platform.`;
+            ? `${c.description.slice(0, 130)}${epInfo} — Watch this Luo translated ${isMovie ? "movie" : "series"} by VJ Paul UG (Senior Paul) free on LUOFILM.SITE.`
+            : `Watch "${c.title}"${epInfo} in Luo language — translated by VJ Paul UG (Senior Paul). Stream free on LUOFILM.SITE, Uganda's #1 Luo streaming platform for all genres.`;
           const image = c.thumbnailUrl || "https://luofilm.site/logo.png";
           const url = `https://luofilm.site/play/${id}`;
           const today = new Date().toISOString().split("T")[0];

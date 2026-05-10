@@ -18,6 +18,7 @@ interface Show {
   description?: string;
   coverUrl?: string;
   thumbnailUrl?: string;
+  updatedAt?: number;
 }
 
 interface CarouselItem {
@@ -44,6 +45,7 @@ function toShow(d: any): Show {
     description: d.description || "",
     coverUrl: d.coverUrl || d.thumbnailUrl || "",
     thumbnailUrl: d.thumbnailUrl || d.coverUrl || "",
+    updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : (d.updatedAt?.toMillis?.() ?? d.createdAt ?? 0),
   };
 }
 
@@ -77,9 +79,9 @@ function carouselToShow(item: CarouselItem, contentMap: Map<string, Show>): Show
 
 export default function HomePage() {
   useSEO({
-    title: "Luo Translated Movies & Drama — VJ Paul UG | Free Stream & Download",
-    description: "LUOFILM.SITE — Stream and download Luo translated movies, drama, series and anime translated by VJ Paul UG. Free online Luo movies, Luo drama, Luo translated content worldwide.",
-    keywords: "luo translated movies, luo movies, luofilm, luo film, vj paul ug, luo translated drama, luo series, luo translated anime, luo translated korean drama, luo translated chinese drama, luofilm.site, download luo movies, stream luo movies, free luo movies",
+    title: "LUOFILM.SITE — #1 Luo Translated Movies, Series, All Genres | VJ Paul UG (Senior Paul) | Free Stream",
+    description: "LUOFILM.SITE — Stream & download ALL Luo translated content by VJ Paul UG (Senior Paul). Movies, series, short series, action, comedy, horror, thriller, romance, Korean drama, Indian series, Chinese drama, anime, documentary, variety, sports & every genre — all translated to Luo. Free & VIP. Uganda's #1 Luo streaming platform.",
+    keywords: "luo translated movies, luo movies, luofilm, luo film, luofilm.site, vj paul ug, senior paul, luo translated all genres, luo series, luo translated series, luo movies 2025, luo action movies, luo comedy, luo horror, luo thriller, luo romance, luo korean drama, luo indian series, luo chinese drama, luo anime, luo documentary, luo variety, luo sports, luo translated short series, free luo movies, download luo movies, stream luo movies, luo translated free, luo film site, watch luo movies online",
     url: "/",
   });
   const [shows, setShows] = useState<Show[]>([]);
@@ -595,7 +597,15 @@ function ContentCard({ show, rank }: { show: Show; rank: number }) {
               color: show.badge === "VIP" ? "#4e2d03" : "#fff",
             }}>{show.badge}</span>
           )}
-          {rank <= 3 && (
+          {show.type === "series" && (show.episodeCount || 0) > 0 && show.updatedAt && (Date.now() - show.updatedAt) < 48 * 60 * 60 * 1000 && (
+            <span style={{
+              position: "absolute", bottom: 5, left: 0, right: 0, textAlign: "center",
+              fontSize: 10, fontWeight: 800, color: "#fff",
+              background: "linear-gradient(90deg,#00c853,#00e676)",
+              padding: "2px 0", letterSpacing: "0.5px",
+            }}>NEW · EP {show.episodeCount}</span>
+          )}
+          {rank <= 3 && !(show.type === "series" && (show.episodeCount || 0) > 0 && show.updatedAt && (Date.now() - show.updatedAt) < 48 * 60 * 60 * 1000) && (
             <span style={{ position: "absolute", bottom: 5, left: 5, fontSize: 20, fontWeight: 900, color: rank === 1 ? "#ffc552" : rank === 2 ? "#c0c0c0" : "#cd7f32", lineHeight: 1, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>{rank}</span>
           )}
         </div>
