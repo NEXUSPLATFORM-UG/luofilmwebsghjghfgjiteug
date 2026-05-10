@@ -79,8 +79,8 @@ function carouselToShow(item: CarouselItem, contentMap: Map<string, Show>): Show
 
 export default function HomePage() {
   useSEO({
-    title: "LUOFILM.SITE — #1 Luo Translated Movies, Series, All Genres | VJ Paul UG (Senior Paul) | Free Stream",
-    description: "LUOFILM.SITE — Stream & download ALL Luo translated content by VJ Paul UG (Senior Paul). Movies, series, short series, action, comedy, horror, thriller, romance, Korean drama, Indian series, Chinese drama, anime, documentary, variety, sports & every genre — all translated to Luo. Free & VIP. Uganda's #1 Luo streaming platform.",
+    title: "#1 Luo Translated Movies, Series, All Genres | VJ Paul UG (Senior Paul) | Free Stream",
+    description: "Stream & download ALL Luo translated content by VJ Paul UG (Senior Paul). Movies, series, short series, action, comedy, horror, thriller, romance, Korean drama, Indian series, Chinese drama, anime, documentary, variety, sports & every genre — all translated to Luo. Free & VIP. Uganda's #1 Luo streaming platform.",
     keywords: "luo translated movies, luo movies, luofilm, luo film, luofilm.site, vj paul ug, senior paul, luo translated all genres, luo series, luo translated series, luo movies 2025, luo action movies, luo comedy, luo horror, luo thriller, luo romance, luo korean drama, luo indian series, luo chinese drama, luo anime, luo documentary, luo variety, luo sports, luo translated short series, free luo movies, download luo movies, stream luo movies, luo translated free, luo film site, watch luo movies online",
     url: "/",
   });
@@ -479,26 +479,38 @@ function SmartRecommender({ allShows }: { allShows: Show[] }) {
   const [recShows, setRecShows] = useState<Show[]>([]);
   const [basedOn, setBasedOn] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [shuffleKey, setShuffleKey] = useState(0);
+
+  const refresh = () => setShuffleKey(k => k + 1);
 
   useEffect(() => {
     if (allShows.length === 0) return;
+    let cancelled = false;
 
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const run = async () => {
+      setLoading(true);
       try {
+        const user = auth.currentUser;
         if (user) {
-          const history = await fbApi.userActions.getHistory(user.uid);
-          if (history.length) {
-            const last = history[0];
-            const watchedId: string = last.contentId;
-            const watchedShow = allShows.find(s => s.id === watchedId);
-            const recs = buildRecs(allShows, watchedId, watchedShow?.genre || "", watchedShow?.type || "");
-            if (recs.length > 0) {
-              setRecShows(recs);
-              setBasedOn(last.contentTitle || watchedShow?.title || "your last watch");
-              return;
+          try {
+            const history = await fbApi.userActions.getHistory(user.uid);
+            if (!cancelled && history.length) {
+              for (const item of history.slice(0, 10)) {
+                const watchedId: string = item.contentId;
+                if (!watchedId) continue;
+                const watchedShow = allShows.find(s => s.id === watchedId);
+                const recs = buildRecs(allShows, watchedId, watchedShow?.genre || "", watchedShow?.type || "");
+                if (recs.length > 0) {
+                  setRecShows(recs);
+                  setBasedOn(item.contentTitle || watchedShow?.title || "your last watch");
+                  setLoading(false);
+                  return;
+                }
+              }
             }
-          }
+          } catch {}
         }
+        if (cancelled) return;
         const clicked = getLastClickedShow();
         if (clicked) {
           const clickedShow = allShows.find(s => s.id === clicked.id) || clicked;
@@ -510,20 +522,22 @@ function SmartRecommender({ allShows }: { allShows: Show[] }) {
         }
       } catch {
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    });
-    return () => unsubscribe();
-  }, [allShows]);
+    };
+
+    run();
+    return () => { cancelled = true; };
+  }, [allShows, shuffleKey]);
 
   if (loading || recShows.length === 0) return null;
 
   return (
-    <SmartRecommenderRow title={basedOn} shows={recShows} />
+    <SmartRecommenderRow title={basedOn} shows={recShows} onRefresh={refresh} />
   );
 }
 
-function SmartRecommenderRow({ title, shows }: { title: string; shows: Show[] }) {
+function SmartRecommenderRow({ title, shows, onRefresh }: { title: string; shows: Show[]; onRefresh?: () => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const scroll = (dir: "left" | "right") => {
     if (scrollRef.current) scrollRef.current.scrollBy({ left: dir === "right" ? 280 : -280, behavior: "smooth" });
@@ -552,6 +566,11 @@ function SmartRecommenderRow({ title, shows }: { title: string; shows: Show[] })
           </div>
         </div>
         <div className="content-row-nav" style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0, marginTop: 4 }}>
+          {onRefresh && (
+            <button onClick={onRefresh} title="Shuffle recommendations" style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>
+              ↺
+            </button>
+          )}
           <button onClick={() => scroll("left")} style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", color: "#a855f7", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <ChevronLeft size={12} />
           </button>

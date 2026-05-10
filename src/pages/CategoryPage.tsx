@@ -123,8 +123,8 @@ export default function CategoryPage({ genre, title, description: _description }
     documentary: "luo documentary, luo historical documentary, vj paul documentary, senior paul documentary, luo translated documentary",
   };
   useSEO({
-    title: `Luo Translated ${title} — All Genres | VJ Paul UG (Senior Paul) | LUOFILM.SITE`,
-    description: seoDescriptions[genre] || `Watch Luo translated ${title} on LUOFILM.SITE — all genres, all types — translated by VJ Paul UG (Senior Paul). Free streaming.`,
+    title: `Luo Translated ${title} — All Genres | VJ Paul UG (Senior Paul)`,
+    description: seoDescriptions[genre] || `Watch Luo translated ${title} — all genres, all types — translated by VJ Paul UG (Senior Paul). Free streaming on LUOFILM.SITE.`,
     keywords: seoKeywords[genre] || `luo translated ${genre}, vj paul, senior paul, luofilm`,
     url: `/${genre === "movie" ? "movie" : genre}`,
   });

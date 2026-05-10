@@ -348,6 +348,11 @@ export const fbApi = {
       await deleteDoc(doc(db, "activities", id));
       return { id };
     },
+    clearAll: async () => {
+      const snap = await getDocs(collection(db, "activities"));
+      await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "activities", d.id))));
+      return { count: snap.docs.length };
+    },
     log: async (data: any) => {
       const ip = await getClientIp();
       const phone = data.userPhone || getCachedUserPhone() || null;
@@ -464,7 +469,11 @@ export const fbApi = {
       const docs = snap.docs
         .map(docToObj)
         .filter((d: any) => d.status === "published")
-        .sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
+        .sort((a: any, b: any) => {
+          const aTime = a.updatedAt || a.createdAt || 0;
+          const bTime = b.updatedAt || b.createdAt || 0;
+          return bTime - aTime;
+        });
       const fixPromises = docs
         .filter((d: any) => d.type === "series" && (d.episodeCount || 0) === 0)
         .map(async (d: any) => {

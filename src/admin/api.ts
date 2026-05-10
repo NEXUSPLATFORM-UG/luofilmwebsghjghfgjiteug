@@ -62,6 +62,7 @@ export const api = {
     list: (params?: Record<string, string>) => fbApi.activities.list(params),
     log: (data: unknown) => fbApi.activities.log(data),
     delete: (id: string) => fbApi.activities.delete(id),
+    clearAll: () => fbApi.activities.clearAll(),
   },
 
   settings: {

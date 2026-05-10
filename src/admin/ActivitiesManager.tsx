@@ -101,6 +101,7 @@ export default function ActivitiesManager() {
   const [actionType, setActionType] = useState("");
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [exportDropdown, setExportDropdown] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const load = () => {
     api.activities.list({ search, actionType, limit: "500" }).then(d => setActivities(d.activities || [])).finally(() => setLoading(false));
@@ -137,6 +138,18 @@ export default function ActivitiesManager() {
             {autoRefresh ? "● Live" : "Auto-Refresh"}
           </button>
           <button onClick={load} style={{ padding: "8px 14px", background: "rgba(255,255,255,0.06)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>Refresh</button>
+          <button
+            disabled={clearing || activities.length === 0}
+            onClick={async () => {
+              if (!window.confirm(`Delete ALL ${activities.length} activity records? This cannot be undone.`)) return;
+              setClearing(true);
+              try { await api.activities.clearAll(); setActivities([]); } catch { alert("Failed to clear activities."); }
+              finally { setClearing(false); }
+            }}
+            style={{ padding: "8px 16px", background: clearing ? "rgba(239,68,68,0.1)" : "#ef444422", color: "#f87171", border: "1px solid #ef444433", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: clearing || activities.length === 0 ? "not-allowed" : "pointer", opacity: activities.length === 0 ? 0.4 : 1, display: "flex", alignItems: "center", gap: 6 }}
+          >
+            <Trash2 size={14} /> {clearing ? "Clearing…" : "Clear All"}
+          </button>
           <div style={{ position: "relative" }}>
             <button onClick={() => setExportDropdown(!exportDropdown)} style={{ padding: "8px 16px", background: "#10b981", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <Download size={14} /> Export PDF <ChevronDown size={13} />

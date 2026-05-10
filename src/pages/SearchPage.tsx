@@ -12,6 +12,7 @@ interface Show {
   genre?: string;
   year?: number;
   rating?: number;
+  description?: string;
   coverUrl?: string;
   thumbnailUrl?: string;
 }
@@ -26,6 +27,7 @@ function toShow(d: any): Show {
     genre: d.genre || "",
     year: d.year || new Date().getFullYear(),
     rating: d.rating || 0,
+    description: d.description || "",
     coverUrl: d.coverUrl || d.thumbnailUrl || "",
     thumbnailUrl: d.thumbnailUrl || d.coverUrl || "",
   };
@@ -85,7 +87,10 @@ export default function SearchPage() {
           .map(toShow)
           .filter(s =>
             s.title.toLowerCase().includes(q) ||
-            (s.genre || "").toLowerCase().includes(q)
+            (s.genre || "").toLowerCase().includes(q) ||
+            (s.type || "").toLowerCase().includes(q) ||
+            (s.description || "").toLowerCase().includes(q) ||
+            String(s.year || "").includes(q)
           );
         setShows(filtered);
       })
