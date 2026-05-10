@@ -423,38 +423,18 @@ function SecondaryCarousel({ shows }: { shows: Show[] }) {
   );
 }
 
-function ContentRow({ title, subtitle, shows, categoryHref }: { title: string; subtitle?: string; shows: Show[]; categoryHref?: string }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+function ContentRow({ title, subtitle, shows }: { title: string; subtitle?: string; shows: Show[]; categoryHref?: string }) {
   if (!shows.length) return null;
-  const scroll = (dir: "left" | "right") => {
-    if (scrollRef.current) scrollRef.current.scrollBy({ left: dir === "right" ? 280 : -280, behavior: "smooth" });
-  };
 
   return (
     <section className="content-row-section" style={{ marginBottom: 24 }}>
-      <div className="content-row-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ display: "inline-block", width: 3, height: 14, borderRadius: 2, background: "#00a9f5" }} />
-          <span className="content-row-title" style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{title}</span>
-          {subtitle && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginLeft: 2 }}>{subtitle}</span>}
-        </div>
-        <div className="content-row-nav" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <button onClick={() => scroll("left")} style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <ChevronLeft size={12} />
-          </button>
-          <button onClick={() => scroll("right")} style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <ChevronRight size={12} />
-          </button>
-          {categoryHref ? (
-            <Link href={categoryHref}>
-              <span style={{ fontSize: 11, color: "#00a9f5", background: "transparent", border: "none", cursor: "pointer", marginLeft: 2, fontWeight: 600 }}>ALL &gt;</span>
-            </Link>
-          ) : (
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginLeft: 2 }}>ALL &gt;</span>
-          )}
-        </div>
+      <div className="content-row-header" style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+        <span style={{ display: "inline-block", width: 3, height: 14, borderRadius: 2, background: "#00a9f5", marginRight: 8 }} />
+        <span className="content-row-title" style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{title}</span>
+        {subtitle && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginLeft: 6 }}>{subtitle}</span>}
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginLeft: 8 }}>{shows.length} TITLES</span>
       </div>
-      <div ref={scrollRef} className="content-row-scroll" style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", paddingBottom: 4 }}>
+      <div className="content-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10 }}>
         {shows.map((show, idx) => <ContentCard key={show.id} show={show} rank={idx + 1} />)}
       </div>
     </section>
@@ -602,7 +582,7 @@ function ContentCard({ show, rank }: { show: Show; rank: number }) {
   }
   return (
     <Link href={`/play/${show.id}`}>
-      <div className="content-card" style={{ flexShrink: 0, width: 128, cursor: "pointer" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={handleClick}>
+      <div className="content-card" style={{ cursor: "pointer" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={handleClick}>
         <div style={{ position: "relative", paddingTop: "133.33%", borderRadius: 5, overflow: "hidden", background: "#1a1a1a" }}>
           <img src={show.thumbnailUrl} alt={show.title} loading="lazy"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: hovered ? "scale(1.05)" : "scale(1)", transition: "transform 0.35s ease" }} />
