@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { fbApi } from "../lib/firebaseApi";
 import { auth } from "../lib/firebase";
-import VideoPlayer from "../components/VideoPlayer";
+import MuxPlayer from "@mux/mux-player-react";
 import VIPModal from "../components/VIPModal";
 import AuthModal from "../components/AuthModal";
 import { useAuth } from "../contexts/AuthContext";
@@ -536,30 +536,37 @@ export default function PlayPage() {
               );
             }
             return (
-              <VideoPlayer
-                src={embed.src}
-                poster={show.coverUrl}
-                title={isSeries ? `${show.title} · Episode ${currentEp}` : show.title}
-                subtitles={subtitleTracks}
-                subtitlesEnabled={subtitlesOn}
-                onProgress={(currentTime, duration, percent) => {
-                  if (!show || !params.id) return;
-                  saveWatchProgress(
-                    params.id,
-                    {
-                      title: show.title,
-                      thumbnailUrl: show.coverUrl || show.thumbnailUrl || "",
-                      type: show.type,
-                      genre: show.genre,
-                      episode: isSeries ? currentEp : undefined,
-                    },
-                    currentTime,
-                    duration,
-                    percent
-                  );
-                  window.dispatchEvent(new Event("lf_progress_updated"));
-                }}
-              />
+              <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000", borderRadius: 8, overflow: "hidden" }}>
+                <MuxPlayer
+                  src={embed.src}
+                  poster={show.coverUrl}
+                  title={isSeries ? `${show.title} · Episode ${currentEp}` : show.title}
+                  streamType="on-demand"
+                  preload="metadata"
+                  style={{ width: "100%", height: "100%", aspectRatio: "16/9" }}
+                  onTimeUpdate={(e: any) => {
+                    const v = e.target as HTMLVideoElement;
+                    if (!v || !v.duration || !show || !params.id) return;
+                    if (Math.floor(v.currentTime) % 10 === 0 && v.currentTime > 2) {
+                      const pct = Math.min(100, Math.round((v.currentTime / v.duration) * 100));
+                      saveWatchProgress(
+                        params.id,
+                        {
+                          title: show.title,
+                          thumbnailUrl: show.coverUrl || show.thumbnailUrl || "",
+                          type: show.type,
+                          genre: show.genre,
+                          episode: isSeries ? currentEp : undefined,
+                        },
+                        v.currentTime,
+                        v.duration,
+                        pct
+                      );
+                      window.dispatchEvent(new Event("lf_progress_updated"));
+                    }
+                  }}
+                />
+              </div>
             );
           })() : (
             <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#111", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>

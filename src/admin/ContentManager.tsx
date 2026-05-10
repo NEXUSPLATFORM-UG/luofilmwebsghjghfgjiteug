@@ -95,10 +95,14 @@ function ContentForm({ initial, onSave, onClose }: any) {
           </select>
         </div>
         <div>
-          <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 5, fontWeight: 600 }}>Genre</label>
-          <select style={inp} value={form.genre} onChange={e => set("genre", e.target.value)}>
-            {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
+          <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 5, fontWeight: 600 }}>Category / Genre</label>
+          <input
+            style={inp}
+            value={form.genre}
+            onChange={e => set("genre", e.target.value)}
+            placeholder="e.g. Romance, Drama, Action"
+          />
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>Separate multiple with commas</div>
         </div>
         <div>
           <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 5, fontWeight: 600 }}>Year</label>

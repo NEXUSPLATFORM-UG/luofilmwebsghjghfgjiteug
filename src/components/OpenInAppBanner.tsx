@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Smartphone, X } from "lucide-react";
+import { Smartphone, X, Download } from "lucide-react";
 
 const STORAGE_KEY = "luofilm_open_in_app_dismissed";
-const FALLBACK_URL = "https://luofilm.site";
+const DEEP_LINK = "luofilm:///";
+const DOWNLOAD_URL = "https://luofilm.site/download";
 
 export default function OpenInAppBanner() {
   const [visible, setVisible] = useState(false);
+  const [appDetected, setAppDetected] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (sessionStorage.getItem(STORAGE_KEY)) return;
@@ -26,11 +28,39 @@ export default function OpenInAppBanner() {
     setVisible(false);
   };
 
-  const openInApp = () => {
-    window.location.href = "luofilm:///";
-    setTimeout(() => {
-      window.location.href = FALLBACK_URL;
-    }, 1500);
+  const handleClick = () => {
+    if (appDetected === false) {
+      window.open(DOWNLOAD_URL, "_blank");
+      return;
+    }
+
+    const start = Date.now();
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = DEEP_LINK;
+    document.body.appendChild(iframe);
+
+    const timer = setTimeout(() => {
+      document.body.removeChild(iframe);
+      const elapsed = Date.now() - start;
+      if (elapsed < 2200) {
+        setAppDetected(false);
+        window.open(DOWNLOAD_URL, "_blank");
+      } else {
+        setAppDetected(true);
+      }
+    }, 2000);
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        clearTimeout(timer);
+        setAppDetected(true);
+        try { document.body.removeChild(iframe); } catch (_) {}
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     dismiss();
   };
 
@@ -71,7 +101,7 @@ export default function OpenInAppBanner() {
       </div>
 
       <button
-        onClick={openInApp}
+        onClick={handleClick}
         style={{
           display: "flex", alignItems: "center", gap: 5,
           background: "linear-gradient(135deg, #00a9f5, #0080c8)",
@@ -82,7 +112,10 @@ export default function OpenInAppBanner() {
           boxShadow: "0 2px 10px rgba(0,169,245,0.35)",
         }}
       >
-        Open in App
+        {appDetected === false
+          ? <><Download size={11} /> Get App</>
+          : "Open in App"
+        }
       </button>
 
       <button

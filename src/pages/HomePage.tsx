@@ -580,7 +580,11 @@ function SmartRecommenderRow({ title, shows, onRefresh }: { title: string; shows
         </div>
       </div>
       <div ref={scrollRef} className="content-row-scroll" style={{ display: "flex", gap: 10, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", paddingBottom: 4 }}>
-        {shows.map((show, idx) => <ContentCard key={show.id} show={show} rank={idx + 1} />)}
+        {shows.map((show, idx) => (
+          <div key={show.id} style={{ width: 120, flexShrink: 0 }}>
+            <ContentCard show={show} rank={idx + 1} />
+          </div>
+        ))}
       </div>
     </section>
   );

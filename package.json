@@ -73,6 +73,7 @@
     "zod": "^3.25.76"
   },
   "dependencies": {
+    "@mux/mux-player-react": "^3.13.0",
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
     "firebase": "^12.11.0",

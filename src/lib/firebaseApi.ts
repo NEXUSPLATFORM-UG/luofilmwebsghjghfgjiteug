@@ -151,18 +151,25 @@ export const fbApi = {
         const ref2 = await addDoc(collection(db, "content", contentId, "episodes"), {
           ...data, views: 0, createdAt: serverTimestamp(),
         });
-        await updateDoc(doc(db, "content", contentId), { episodeCount: increment(1) });
+        await updateDoc(doc(db, "content", contentId), {
+          episodeCount: increment(1),
+          updatedAt: serverTimestamp(),
+        });
         return { id: ref2.id };
       },
       update: async (contentId: string, epId: string, data: any) => {
         await updateDoc(doc(db, "content", contentId, "episodes", epId), {
           ...data, updatedAt: serverTimestamp(),
         });
+        await updateDoc(doc(db, "content", contentId), { updatedAt: serverTimestamp() });
         return { id: epId };
       },
       delete: async (contentId: string, epId: string) => {
         await deleteDoc(doc(db, "content", contentId, "episodes", epId));
-        await updateDoc(doc(db, "content", contentId), { episodeCount: increment(-1) });
+        await updateDoc(doc(db, "content", contentId), {
+          episodeCount: increment(-1),
+          updatedAt: serverTimestamp(),
+        });
         return { id: epId };
       },
     },
