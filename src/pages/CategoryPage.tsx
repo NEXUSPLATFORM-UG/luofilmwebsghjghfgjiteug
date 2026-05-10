@@ -138,11 +138,8 @@ export default function CategoryPage({ genre, title, description: _description }
           // Movies page: all content with type "movie"
           setShows(all.filter(s => s.type === "movie"));
         } else if (genre === "drama") {
-          // Drama page: all series + anything whose genre matches drama keywords
-          setShows(all.filter(s =>
-            s.type === "series" ||
-            keywords.some(kw => (s.genre || "").toLowerCase().includes(kw))
-          ));
+          // Drama page: only series
+          setShows(all.filter(s => s.type === "series"));
         } else {
           // Other pages: genre keyword match, but also include series that match
           const matched = all.filter(s =>

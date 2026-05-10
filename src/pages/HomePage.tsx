@@ -298,28 +298,7 @@ export default function HomePage() {
         <ContinueWatching />
         <SmartRecommender allShows={shows} />
         {shows.length > 0 && (
-          <ContentRow title="ALL CONTENT" subtitle="RECENTLY ADDED" shows={shows.slice(0, 10)} categoryHref="/drama" />
-        )}
-        {series.length > 0 && (
-          <ContentRow title="SERIES" shows={series.slice(0, 10)} categoryHref="/drama" />
-        )}
-        {movies.length > 0 && (
-          <ContentRow title="MOVIES" shows={movies.slice(0, 10)} categoryHref="/movie" />
-        )}
-        {byGenre("romance").length > 0 && (
-          <ContentRow title="ROMANCE" shows={byGenre("romance").slice(0, 10)} categoryHref="/drama" />
-        )}
-        {byGenre("fantasy").length > 0 && (
-          <ContentRow title="FANTASY & WUXIA" shows={byGenre("fantasy").slice(0, 10)} categoryHref="/anime" />
-        )}
-        {byGenre("historical").length > 0 && (
-          <ContentRow title="HISTORICAL" shows={byGenre("historical").slice(0, 10)} categoryHref="/documentary" />
-        )}
-        {byGenre("action").length > 0 && (
-          <ContentRow title="ACTION" shows={byGenre("action").slice(0, 10)} categoryHref="/sports" />
-        )}
-        {byGenre("drama").length > 0 && (
-          <ContentRow title="DRAMA" shows={byGenre("drama").slice(0, 10)} categoryHref="/drama" />
+          <ContentRow title="ALL CONTENT" subtitle="RECENTLY ADDED" shows={shows} />
         )}
         {shows.length === 0 && !loading && (
           <div style={{ textAlign: "center", padding: "60px 0", color: "rgba(255,255,255,0.25)", fontSize: 14 }}>
